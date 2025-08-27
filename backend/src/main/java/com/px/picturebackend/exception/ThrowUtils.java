@@ -36,7 +36,16 @@ public class ThrowUtils {
         throwIf(condition, new BusinessException(errorCode));
     }
 
+    /**
+     * 根据给定条件抛出异常
+     * 此方法用于简化条件判断和异常抛出的逻辑，使调用处代码更清晰
+     *
+     * @param condition    决定是否抛出异常的条件
+     * @param errorCode    如果条件为真时要抛出的异常码
+     * @param message      异常信息描述
+     */
     public static void throwIf(boolean condition, ErrorCode errorCode, String message) {
         throwIf(condition, new BusinessException(errorCode, message));
     }
+
 }
