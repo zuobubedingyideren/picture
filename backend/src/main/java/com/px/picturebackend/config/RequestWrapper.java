@@ -25,7 +25,7 @@ public class RequestWrapper extends HttpServletRequestWrapper {
     public RequestWrapper(HttpServletRequest request) {
         super(request);
         StringBuilder stringBuilder = new StringBuilder();
-        try (InputStream inputStream = request.getInputStream(); BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (InputStream inputStream = request.getInputStream(); BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
             char[] charBuffer = new char[128];
             int bytesRead = -1;
             while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
@@ -46,7 +46,7 @@ public class RequestWrapper extends HttpServletRequestWrapper {
     @Override
     public ServletInputStream getInputStream() throws IOException {
         // 创建基于请求体内容的字节数组输入流
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes("UTF-8"));
         return new ServletInputStream() {
             /**
              * 检查输入流是否已完成读取
@@ -104,7 +104,7 @@ public class RequestWrapper extends HttpServletRequestWrapper {
      */
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new InputStreamReader(this.getInputStream()));
+        return new BufferedReader(new InputStreamReader(this.getInputStream(), "UTF-8"));
     }
 
     public String getBody() {

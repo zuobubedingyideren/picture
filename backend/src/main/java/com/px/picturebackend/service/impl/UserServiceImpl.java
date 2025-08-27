@@ -1,11 +1,17 @@
 package com.px.picturebackend.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.px.picturebackend.config.CosClientConfig;
 import com.px.picturebackend.exception.BusinessException;
 import com.px.picturebackend.exception.ErrorCode;
+import com.px.picturebackend.exception.ThrowUtils;
+import com.px.picturebackend.manager.CosManager;
 import com.px.picturebackend.manager.auth.StpKit;
 import com.px.picturebackend.mapper.UserMapper;
 import com.px.picturebackend.model.dto.user.UserQueryRequest;
@@ -18,11 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.px.picturebackend.constant.UserConstant.USER_LOGIN_STATE;
@@ -37,6 +44,12 @@ import static com.px.picturebackend.constant.UserConstant.USER_LOGIN_STATE;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService{
+
+    @Resource
+    private CosManager cosManager;
+
+    @Resource
+    private CosClientConfig cosClientConfig;
 
     /**
      * 用户注册
@@ -53,24 +66,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
 
-        if (userAccount.length() < 4) {
+       /*  if (userAccount.length() < 4) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
-        }
+        } */
+
+        ThrowUtils.throwIf(userAccount.length()< 4, ErrorCode.PARAMS_ERROR, "用户账号过短");
 
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
         }
 
-        if (!userPassword.equals(checkPassword)) {
+        /* if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
-        }
+        } */
+        ThrowUtils.throwIf(!userPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+
         // 2. 检查是否重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
         long count = this.baseMapper.selectCount(queryWrapper);
-        if (count > 0) {
+        /* if (count > 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
-        }
+        } */
+        ThrowUtils.throwIf(count > 0 , ErrorCode.PARAMS_ERROR, "账号");
         // 3. 加密
         String encryptPassword = getEncryptPassword(userPassword);
         // 4. 插入数据
@@ -276,6 +294,82 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public boolean isAdmin(User user) {
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+    }
+
+    /**
+     * 上传用户头像
+     * 处理头像文件的验证、上传和URL生成等业务逻辑
+     *
+     * @param multipartFile 上传的头像文件，包含文件内容和元数据
+     * @param loginUser 当前登录用户信息，用于生成唯一文件名和权限验证
+     * @return 上传成功后的头像访问URL地址
+     * @throws BusinessException 当文件验证失败或上传失败时抛出业务异常
+     */
+    @Override
+    public String uploadAvatar(MultipartFile multipartFile, User loginUser) {
+        File tempFile = null;
+        try {
+            // 验证文件是否为空
+            if (multipartFile == null || multipartFile.isEmpty()) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件不能为空");
+            }
+
+            // 验证文件类型
+            String originalFilename = multipartFile.getOriginalFilename();
+            if (originalFilename == null) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件名不能为空");
+            }
+
+            // 验证文件扩展名
+            String fileExtension = FileUtil.getSuffix(originalFilename).toLowerCase();
+            List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png", "gif", "bmp", "webp");
+            if (!allowedExtensions.contains(fileExtension)) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件格式，仅支持: " + String.join(", ", allowedExtensions));
+            }
+
+            // 验证文件大小（限制为5MB）
+            long maxSize = 5 * 1024 * 1024; // 5MB
+            if (multipartFile.getSize() > maxSize) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件大小不能超过5MB");
+            }
+
+            // 生成唯一的文件名
+            String uuid = RandomUtil.randomString(16);
+            String uploadFileName = String.format("%s_%s_%s.%s",
+                    DateUtil.formatDate(new Date()),
+                    loginUser.getId(),
+                    uuid,
+                    fileExtension);
+            String uploadPath = String.format("/avatar/%s", uploadFileName);
+
+            // 创建临时文件
+            tempFile = File.createTempFile("avatar_", "." + fileExtension);
+            multipartFile.transferTo(tempFile);
+
+            // 使用CosManager直接上传文件
+            cosManager.putObject(uploadPath, tempFile);
+
+            // 构造文件访问URL
+            String fileUrl = cosClientConfig.getHost() + uploadPath;
+
+            log.info("用户 {} 上传头像成功，文件路径: {}, 访问URL: {}", loginUser.getId(), uploadPath, fileUrl);
+            return fileUrl;
+
+        } catch (BusinessException e) {
+            // 重新抛出业务异常
+            throw e;
+        } catch (Exception e) {
+            log.error("头像上传失败，发生未知错误", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "头像上传失败: " + e.getMessage());
+        } finally {
+            // 清理临时文件
+            if (tempFile != null && tempFile.exists()) {
+                boolean deleted = tempFile.delete();
+                if (!deleted) {
+                    log.warn("临时文件删除失败: {}", tempFile.getAbsolutePath());
+                }
+            }
+        }
     }
 }
 

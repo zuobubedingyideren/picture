@@ -1,14 +1,13 @@
 package com.px.picturebackend.service;
 
-import cn.hutool.http.server.HttpServerRequest;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.px.picturebackend.model.dto.user.UserQueryRequest;
 import com.px.picturebackend.model.entity.User;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.px.picturebackend.model.vo.user.LoginUserVO;
 import com.px.picturebackend.model.vo.user.UserVO;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -94,4 +93,15 @@ public interface UserService extends IService<User> {
      * @return true为真，false为假
      */
     boolean isAdmin(User user);
+
+    /**
+     * 上传用户头像
+     * 处理头像文件的验证、上传和URL生成等业务逻辑
+     *
+     * @param multipartFile 上传的头像文件，包含文件内容和元数据
+     * @param loginUser 当前登录用户信息，用于生成唯一文件名和权限验证
+     * @return 上传成功后的头像访问URL地址
+     * @throws com.px.picturebackend.common.exception.BusinessException 当文件验证失败或上传失败时抛出业务异常
+     */
+    String uploadAvatar(MultipartFile multipartFile, User loginUser);
 }

@@ -6,10 +6,12 @@ import com.px.picturebackend.annotation.AuthCheck;
 import com.px.picturebackend.common.BaseResponse;
 import com.px.picturebackend.common.DeleteRequest;
 import com.px.picturebackend.common.ResultUtils;
+import com.px.picturebackend.config.CosClientConfig;
 import com.px.picturebackend.constant.UserConstant;
 import com.px.picturebackend.exception.BusinessException;
 import com.px.picturebackend.exception.ErrorCode;
 import com.px.picturebackend.exception.ThrowUtils;
+import com.px.picturebackend.manager.CosManager;
 import com.px.picturebackend.model.dto.user.*;
 import com.px.picturebackend.model.entity.User;
 import com.px.picturebackend.model.vo.user.LoginUserVO;
@@ -17,8 +19,10 @@ import com.px.picturebackend.model.vo.user.UserVO;
 import com.px.picturebackend.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -36,10 +40,18 @@ import java.util.List;
 @Api(tags = "用户服务接口")
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private CosManager cosManager;
+
+    @Resource
+    private CosClientConfig cosClientConfig;
+    
 
     /**
      * 处理用户注册请求的端点
@@ -216,6 +228,29 @@ public class UserController {
     }
 
     /**
+     * 用户更新自己的信息
+     *
+     * @param userUpdateMyInfoRequest 用户更新自己信息的请求参数
+     * @param request HTTP请求对象，用于获取当前登录用户信息
+     * @return 更新结果，成功返回true
+     */
+    @ApiOperation("用户更新自己的信息")
+    @PostMapping("/update/my_info")
+    public BaseResponse<Boolean> updateMyInfo(@RequestBody UserUpdateMyInfoRequest userUpdateMyInfoRequest, HttpServletRequest request) {
+        if (userUpdateMyInfoRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        User user = new User();
+        BeanUtils.copyProperties(userUpdateMyInfoRequest, user);
+        user.setId(loginUser.getId());
+        boolean result = userService.updateById(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+
+    /**
      * 分页获取用户封装列表（仅管理员）
      *
      * @param userQueryRequest 查询请求参数
@@ -233,5 +268,29 @@ public class UserController {
         List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
+    }
+
+    /**
+     * 用户头像上传接口
+     * 普通用户上传头像，只需要登录即可，不需要管理员权限
+     * 业务逻辑已抽取到AvatarService层，Controller层仅处理请求响应
+     *
+     * @param multipartFile 上传的头像文件
+     * @param request HTTP请求对象，用于获取当前登录用户信息
+     * @return 上传成功后返回文件访问路径
+     */
+    @ApiOperation("用户头像上传")
+    @PostMapping("/upload/avatar")
+    public BaseResponse<String> uploadAvatar(@RequestPart("file") MultipartFile multipartFile, HttpServletRequest request) {
+        // 验证用户是否登录
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        }
+
+        // 调用AvatarService处理头像上传业务逻辑
+        String fileUrl = userService.uploadAvatar(multipartFile, loginUser);
+        
+        return ResultUtils.success(fileUrl);
     }
 }

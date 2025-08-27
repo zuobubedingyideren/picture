@@ -9,6 +9,9 @@ server:
 spring:
   application:
     name: picture-backend
+  # 配置文件激活
+  profiles:
+    active: local
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -57,14 +60,16 @@ knife4j:
           - com.px.picturebackend.controller
 
 # 阿里云AI配置
+# 优先从环境变量读取，如果没有则从application-local.yml读取
 aliYunAi:
-  apiKey: ${ALI_YUN_AI_API_KEY:your-ali-yun-ai-api-key}
+  apiKey: ${ALI_YUN_AI_API_KEY:}
 
 # 腾讯云COS配置
+# 优先从环境变量读取，如果没有则从application-local.yml读取
 cos:
   client:
     host: https://picture-1356335042.cos.ap-chongqing.myqcloud.com
-    secretId: ${TENCENT_COS_SECRET_ID:your-tencent-cos-secret-id}
-    secretKey: ${TENCENT_COS_SECRET_KEY:your-tencent-cos-secret-key}
+    secretId: ${TENCENT_COS_SECRET_ID:}
+    secretKey: ${TENCENT_COS_SECRET_KEY:}
     region: ap-chongqing
     bucket: picture-1356335042

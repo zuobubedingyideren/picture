@@ -1,15 +1,15 @@
 package com.px.picturebackend.controller;
 
-import com.qcloud.cos.model.COSObject;
-import com.qcloud.cos.model.COSObjectInputStream;
-import com.qcloud.cos.utils.IOUtils;
 import com.px.picturebackend.annotation.AuthCheck;
 import com.px.picturebackend.common.BaseResponse;
 import com.px.picturebackend.common.ResultUtils;
 import com.px.picturebackend.constant.UserConstant;
 import com.px.picturebackend.exception.BusinessException;
 import com.px.picturebackend.exception.ErrorCode;
-import com.px.picturebackend.manager.CosManager;    
+import com.px.picturebackend.manager.CosManager;
+import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.COSObjectInputStream;
+import com.qcloud.cos.utils.IOUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +37,8 @@ import java.io.IOException;
 public class FileController {
     @Resource
     private CosManager cosManager;
+    
+
 
 
     /**
@@ -109,6 +111,7 @@ public class FileController {
             }
         }
     }
+
 
 
 }
