@@ -1,4 +1,4 @@
-package com.px.picturebacked.model.dto.picture;
+package com.px.picturebackend.model.dto.picture;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

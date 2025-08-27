@@ -43,7 +43,7 @@
             </a-dropdown>
           </div>
           <div v-else>
-            <a-button type="primary" @click="goToLogin">登录</a-button>
+            <a-button type="primary" href="/user/login">登录</a-button>
           </div>
         </div>
       </a-col>
@@ -56,7 +56,7 @@ import { HomeOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons-vu
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
-import { userLogoutUsingPost } from '@/api/userController.ts'
+import { userLogoutUsingPost } from '@/api/userController'
 
 const loginUserStore = useLoginUserStore()
 
@@ -127,24 +127,7 @@ const doMenuClick = ({ key }) => {
   })
 }
 
-/**
- * 跳转到登录页面
- */
-const goToLogin = () => {
-  console.log('goToLogin函数被调用')
-  console.log('当前路由:', router.currentRoute.value.path)
-  try {
-    console.log('准备跳转到登录页面')
-    router.push('/user/login')
-    console.log('router.push调用完成')
-  } catch (error) {
-    console.error('路由跳转出错:', error)
-  }
-}
-
-/**
- * 用户注销
- */
+// 用户注销
 const doLogout = async () => {
   const res = await userLogoutUsingPost()
   if (res.data.code === 0) {

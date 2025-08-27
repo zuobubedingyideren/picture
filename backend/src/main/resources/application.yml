@@ -8,7 +8,7 @@ server:
         max-age: 2592000
 spring:
   application:
-    name: yu-picture-backend
+    name: picture-backend
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -42,7 +42,7 @@ mybatis-plus:
       # 逻辑未删除值
       logic-not-delete-value: 0
   mapper-locations: classpath*:/mapper/**/*.xml
-  type-aliases-package: com.picturebackend.model.entity
+  type-aliases-package: com.px.picturebackend.model.entity
 
 # 接口文档配置
 knife4j:
@@ -54,7 +54,7 @@ knife4j:
       default:
         api-rule: package
         api-rule-resources:
-          - com.picturebackend.controller
+          - com.px.picturebackend.controller
 
 # 阿里云AI配置
 aliYunAi:

@@ -1,4 +1,4 @@
-package com.picturebackend;
+package com.px.picturebackend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

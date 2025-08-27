@@ -2,7 +2,7 @@
 /* eslint-disable */
 import request from '@/request'
 
-/** 获取空间分类分析数据 POST /api/space/analyze/category */
+/** getSpaceCategoryAnalyze POST /api/space/analyze/category */
 export async function getSpaceCategoryAnalyzeUsingPost(
   body: API.SpaceCategoryAnalyzeRequest,
   options?: { [key: string]: any }
@@ -17,7 +17,7 @@ export async function getSpaceCategoryAnalyzeUsingPost(
   })
 }
 
-/** 获取空间排名分析数据 POST /api/space/analyze/rank */
+/** getSpaceRankAnalyze POST /api/space/analyze/rank */
 export async function getSpaceRankAnalyzeUsingPost(
   body: API.SpaceRankAnalyzeRequest,
   options?: { [key: string]: any }
@@ -32,7 +32,7 @@ export async function getSpaceRankAnalyzeUsingPost(
   })
 }
 
-/** 获取空间图片大小分析数据 POST /api/space/analyze/size */
+/** getSpaceSizeAnalyze POST /api/space/analyze/size */
 export async function getSpaceSizeAnalyzeUsingPost(
   body: API.SpaceSizeAnalyzeRequest,
   options?: { [key: string]: any }
@@ -47,12 +47,12 @@ export async function getSpaceSizeAnalyzeUsingPost(
   })
 }
 
-/** 获取空间标签分析数据 POST /api/space/analyze/tags */
+/** getSpaceTagAnalyze POST /api/space/analyze/tag */
 export async function getSpaceTagAnalyzeUsingPost(
   body: API.SpaceTagAnalyzeRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseListSpaceTagAnalyzeResponse_>('/api/space/analyze/tags', {
+  return request<API.BaseResponseListSpaceTagAnalyzeResponse_>('/api/space/analyze/tag', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ export async function getSpaceTagAnalyzeUsingPost(
   })
 }
 
-/** 获取空间使用情况分析 POST /api/space/analyze/usage */
+/** getSpaceUsageAnalyze POST /api/space/analyze/usage */
 export async function getSpaceUsageAnalyzeUsingPost(
   body: API.SpaceUsageAnalyzeRequest,
   options?: { [key: string]: any }
@@ -77,7 +77,7 @@ export async function getSpaceUsageAnalyzeUsingPost(
   })
 }
 
-/** 获取空间用户分析数据 POST /api/space/analyze/user */
+/** getSpaceUserAnalyze POST /api/space/analyze/user */
 export async function getSpaceUserAnalyzeUsingPost(
   body: API.SpaceUserAnalyzeRequest,
   options?: { [key: string]: any }

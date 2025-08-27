@@ -451,7 +451,7 @@ public class PictureController {
     @PostMapping("/upload/batch")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Integer> uploadPictureByBatch(
-            @RequestBody com.px.picturebacked.model.dto.picture.PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            @RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
             HttpServletRequest request
     ) {
         ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);

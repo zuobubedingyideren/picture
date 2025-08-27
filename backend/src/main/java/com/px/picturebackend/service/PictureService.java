@@ -88,7 +88,7 @@ public interface PictureService extends IService<Picture> {
      * @return 返回成功抓取并上传的图片数量
      */
     Integer uploadPictureByBatch(
-            com.px.picturebacked.model.dto.picture.PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            PictureUploadByBatchRequest pictureUploadByBatchRequest,
             User loginUser
     );
 

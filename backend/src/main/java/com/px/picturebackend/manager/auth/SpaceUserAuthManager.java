@@ -4,6 +4,7 @@ import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.px.picturebackend.manager.auth.model.SpaceUserAuthConfig;
+import com.px.picturebackend.manager.auth.model.SpaceUserRole;
 import com.px.picturebackend.model.entity.Space;
 import com.px.picturebackend.model.entity.SpaceUser;
 import com.px.picturebackend.model.entity.User;
@@ -54,7 +55,7 @@ public class SpaceUserAuthManager {
             return new ArrayList<>();
         }
         // 找到匹配的角色
-        com.px.picturebacked.manager.auth.model.SpaceUserRole role = SPACE_USER_AUTH_CONFIG.getRoles().stream()
+        SpaceUserRole role = SPACE_USER_AUTH_CONFIG.getRoles().stream()
                 .filter(r -> spaceUserRole.equals(r.getKey()))
                 .findFirst()
                 .orElse(null);

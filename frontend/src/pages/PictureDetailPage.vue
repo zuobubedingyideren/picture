@@ -4,7 +4,7 @@
       <!-- 图片预览 -->
       <a-col :sm="24" :md="16" :xl="18">
         <a-card title="图片预览">
-          <a-image :src="convertImageUrl(picture.url)" style="max-height: 600px; object-fit: contain" />
+          <a-image :src="picture.url" style="max-height: 600px; object-fit: contain" />
         </a-card>
       </a-col>
       <!-- 图片信息区域 -->
@@ -99,7 +99,6 @@ import { useRouter } from 'vue-router'
 import { downloadImage, formatSize, toHexColor } from '@/utils'
 import ShareModal from '@/components/ShareModal.vue'
 import { SPACE_PERMISSION_ENUM } from '@/constants/space.ts'
-import { convertImageUrl } from '@/utils/imageUtils'
 
 interface Props {
   id: string | number
@@ -168,7 +167,6 @@ const doDelete = async () => {
 
 // 下载图片
 const doDownload = () => {
-  // 下载时使用原始URL，避免代理影响下载
   downloadImage(picture.value.url)
 }
 

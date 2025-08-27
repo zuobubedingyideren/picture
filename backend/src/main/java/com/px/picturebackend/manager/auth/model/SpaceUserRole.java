@@ -1,7 +1,8 @@
-package com.px.picturebacked.manager.auth.model;
+package com.px.picturebackend.manager.auth.model;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -37,5 +38,6 @@ public class SpaceUserRole implements Serializable {
      */
     private String description;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }

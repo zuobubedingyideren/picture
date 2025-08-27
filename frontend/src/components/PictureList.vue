@@ -13,7 +13,7 @@
             <template #cover>
               <img
                 :alt="picture.name"
-                :src="convertImageUrl(picture.thumbnailUrl ?? picture.url)"
+                :src="picture.thumbnailUrl ?? picture.url"
                 style="height: 180px; object-fit: cover"
               />
             </template>
@@ -55,7 +55,6 @@ import { deletePictureUsingPost } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
 import ShareModal from '@/components/ShareModal.vue'
 import { ref } from 'vue'
-import { convertImageUrl } from '@/utils/imageUtils'
 
 interface Props {
   dataList?: API.PictureVO[]

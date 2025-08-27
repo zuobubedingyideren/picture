@@ -1,10 +1,4 @@
 declare namespace API {
-  type AI_ = {
-    parameters?: Parameters
-    /** 图片ID，用于标识需要进行扩图处理的原始图片 */
-    pictureId?: number
-  }
-
   type BaseResponseBoolean_ = {
     code?: number
     data?: boolean
@@ -192,6 +186,11 @@ declare namespace API {
     requestId?: string
   }
 
+  type CreatePictureOutPaintingTaskRequest = {
+    parameters?: Parameters
+    pictureId?: number
+  }
+
   type DeleteRequest = {
     id?: number
   }
@@ -237,14 +236,13 @@ declare namespace API {
   }
 
   type ImageSearchResult = {
-    /** 来源地址 */
     fromUrl?: string
-    /** 缩略图地址 */
     thumbUrl?: string
   }
 
   type LoginUserVO = {
     createTime?: string
+    editTime?: string
     id?: number
     updateTime?: string
     userAccount?: string
@@ -313,15 +311,16 @@ declare namespace API {
 
   type Parameters = {
     addWatermark?: boolean
+    angle?: number
     bestQuality?: boolean
-    bottomScale?: number
-    leftScale?: number
+    bottomOffset?: number
+    leftOffset?: number
     limitImageSize?: boolean
-    n?: number
     outputRatio?: string
-    rightScale?: number
-    seed?: number
-    topScale?: number
+    rightOffset?: number
+    topOffset?: number
+    xScale?: number
+    yScale?: number
   }
 
   type Picture = {
@@ -351,82 +350,51 @@ declare namespace API {
   }
 
   type PictureEditByBatchRequest = {
-    /** 分类 */
     category?: string
-    /** 命名规则 */
     nameRule?: string
-    /** 图片ID列表 */
-    pictureIdList: number[]
-    /** 空间ID */
-    spaceId: number
-    /** 标签列表 */
+    pictureIdList?: number[]
+    spaceId?: number
     tags?: string[]
   }
 
   type PictureEditRequest = {
-    /** 图片分类 */
     category?: string
-    /** 图片ID */
     id?: number
-    /** 图片简介 */
     introduction?: string
-    /** 图片名称 */
     name?: string
-    /** 图片标签列表 */
     tags?: string[]
   }
 
   type PictureQueryRequest = {
-    /** 图片分类 */
     category?: string
     current?: number
-    /** 编辑时间结束值 */
     endEditTime?: string
-    /** 图片ID */
     id?: number
-    /** 图片简介 */
     introduction?: string
-    /** 图片名称 */
     name?: string
-    /** 是否只查询 spaceId 为 null 的数据 */
     nullSpaceId?: boolean
     pageSize?: number
-    /** 图片格式（如jpg、png等） */
     picFormat?: string
-    /** 图片高度（像素） */
     picHeight?: number
-    /** 图片宽高比 */
     picScale?: number
-    /** 文件大小（字节） */
     picSize?: number
-    /** 图片宽度（像素） */
     picWidth?: number
-    /** 审核反馈信息 */
     reviewMessage?: string
-    /** 审核状态：0-待审核; 1-通过; 2-拒绝 */
     reviewStatus?: number
-    /** 审核人员ID */
+    reviewTime?: string
     reviewerId?: number
-    /** 搜索关键词（支持名称和简介模糊搜索） */
     searchText?: string
     sortField?: string
     sortOrder?: string
-    /** 空间ID */
     spaceId?: number
-    /** 编辑时间起始值 */
     startEditTime?: string
-    /** 图片标签列表 */
     tags?: string[]
-    /** 上传用户ID */
     userId?: number
   }
 
   type PictureReviewRequest = {
-    /** 图片ID */
     id?: number
-    /** 审核信息 */
     reviewMessage?: string
-    /** 审核状态：0-待审核, 1-通过, 2-拒绝 */
     reviewStatus?: number
   }
 
@@ -435,23 +403,24 @@ declare namespace API {
     tagList?: string[]
   }
 
+  type PictureUpdateRequest = {
+    category?: string
+    id?: number
+    introduction?: string
+    name?: string
+    tags?: string[]
+  }
+
   type PictureUploadByBatchRequest = {
-    /** 抓取数量 */
     count?: number
-    /** 名称前缀 */
     namePrefix?: string
-    /** 搜索词 */
     searchText?: string
   }
 
   type PictureUploadRequest = {
-    /** 文件地址 */
     fileUrl?: string
-    /** 图片ID */
     id?: number
-    /** 图片名称 */
     picName?: string
-    /** 空间ID */
     spaceId?: number
   }
 
@@ -478,44 +447,12 @@ declare namespace API {
     userId?: number
   }
 
-  type Pinyin__ = {
-    /** 图片分类 */
-    category?: string
-    /** 图片ID，用于唯一标识一张图片 */
-    id?: number
-    /** 图片简介 */
-    introduction?: string
-    /** 图片名称 */
-    name?: string
-    /** 图片标签列表 */
-    tags?: string[]
-  }
-
-  type Pinyin_2 = {
-    current?: number
-    /** id */
-    id?: number
-    pageSize?: number
-    sortField?: string
-    sortOrder?: string
-    /** 空间级别：0-普通版 1-专业版 2-旗舰版 */
-    spaceLevel?: number
-    /** 空间名称 */
-    spaceName?: string
-    spaceType?: number
-    /** 用户 id */
-    userId?: number
-  }
-
   type SearchPictureByColorRequest = {
-    /** 图片颜色 */
     picColor?: string
-    /** 空间ID */
     spaceId?: number
   }
 
   type SearchPictureByPictureRequest = {
-    /** 图片id */
     pictureId?: number
   }
 
@@ -536,20 +473,14 @@ declare namespace API {
   }
 
   type SpaceAddRequest = {
-    /** 空间等级 */
     spaceLevel?: number
-    /** 空间名称 */
     spaceName?: string
-    /** 空间类型 */
     spaceType?: number
   }
 
   type SpaceCategoryAnalyzeRequest = {
-    /** 是否查询所有数据 */
     queryAll?: boolean
-    /** 是否查询公开空间 */
     queryPublic?: boolean
-    /** 空间ID */
     spaceId?: number
   }
 
@@ -560,21 +491,27 @@ declare namespace API {
   }
 
   type SpaceEditRequest = {
-    /** 空间ID */
-    id: number
-    /** 空间名称 */
-    spaceName: string
+    id?: number
+    spaceName?: string
   }
 
   type SpaceLevel = {
-    /** 该级别下最大文件数量限制 */
     maxCount?: number
-    /** 该级别下最大存储空间大小（单位：字节 */
     maxSize?: number
-    /** 空间级别的描述文本 */
     text?: string
-    /** 空间级别的值 */
     value?: number
+  }
+
+  type SpaceQueryRequest = {
+    current?: number
+    id?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    spaceLevel?: number
+    spaceName?: string
+    spaceType?: number
+    userId?: number
   }
 
   type SpaceRankAnalyzeRequest = {
@@ -582,11 +519,8 @@ declare namespace API {
   }
 
   type SpaceSizeAnalyzeRequest = {
-    /** 是否查询所有数据 */
     queryAll?: boolean
-    /** 是否查询公开空间 */
     queryPublic?: boolean
-    /** 空间ID */
     spaceId?: number
   }
 
@@ -596,11 +530,8 @@ declare namespace API {
   }
 
   type SpaceTagAnalyzeRequest = {
-    /** 是否查询所有数据 */
     queryAll?: boolean
-    /** 是否查询公开空间 */
     queryPublic?: boolean
-    /** 空间ID */
     spaceId?: number
   }
 
@@ -610,40 +541,26 @@ declare namespace API {
   }
 
   type SpaceUpdateRequest = {
-    /** 空间ID */
-    id: number
-    /** 空间图片的最大数量 */
-    maxCount: number
-    /** 空间图片的最大总大小（单位：字节） */
-    maxSize: number
-    /** 空间级别：0-普通版 1-专业版 2-旗舰版 */
-    spaceLevel: number
-    /** 空间名称 */
-    spaceName: string
+    id?: number
+    maxCount?: number
+    maxSize?: number
+    spaceLevel?: number
+    spaceName?: string
   }
 
   type SpaceUsageAnalyzeRequest = {
-    /** 是否查询所有数据 */
     queryAll?: boolean
-    /** 是否查询公开空间 */
     queryPublic?: boolean
-    /** 空间ID */
     spaceId?: number
   }
 
   type SpaceUsageAnalyzeResponse = {
-    /** 文件数量使用比例 */
     countUsageRatio?: number
-    /** 用户最大允许的文件数量 */
     maxCount?: number
-    /** 用户最大允许的存储空间大小（字节） */
     maxSize?: number
-    /** 存储空间使用比例 */
     sizeUsageRatio?: number
-    /** 用户已使用的文件数量 */
     usedCount?: number
-    /** 用户已使用的存储空间大小（字节） */
-    userSize?: number
+    usedSize?: number
   }
 
   type SpaceUser = {
@@ -662,11 +579,8 @@ declare namespace API {
   }
 
   type SpaceUserAnalyzeRequest = {
-    /** 是否查询所有数据 */
     queryAll?: boolean
-    /** 是否查询公开空间 */
     queryPublic?: boolean
-    /** 空间ID */
     spaceId?: number
     timeDimension?: string
     userId?: number
@@ -729,13 +643,9 @@ declare namespace API {
   }
 
   type uploadPictureUsingPOSTParams = {
-    /** 文件地址 */
     fileUrl?: string
-    /** 图片ID */
     id?: number
-    /** 图片名称 */
     picName?: string
-    /** 空间ID */
     spaceId?: number
   }
 
@@ -754,61 +664,41 @@ declare namespace API {
   }
 
   type UserAddRequest = {
-    /** 账号 */
     userAccount?: string
-    /** 用户头像 */
     userAvatar?: string
-    /** 用户昵称 */
     userName?: string
-    /** 用户简介 */
     userProfile?: string
-    /** 用户角色: user, admin */
     userRole?: string
   }
 
   type UserLoginRequest = {
-    /** 账号 */
     userAccount?: string
-    /** 密码 */
     userPassword?: string
   }
 
   type UserQueryRequest = {
     current?: number
-    /** 用户ID */
     id?: number
     pageSize?: number
     sortField?: string
     sortOrder?: string
-    /** 用户账号 */
     userAccount?: string
-    /** 用户昵称 */
     userName?: string
-    /** 用户简介 */
     userProfile?: string
-    /** 用户角色：user/admin/ban */
     userRole?: string
   }
 
   type UserRegisterRequest = {
-    /** 确认密码 */
     checkPassword?: string
-    /** 账号 */
     userAccount?: string
-    /** 密码 */
     userPassword?: string
   }
 
   type UserUpdateRequest = {
-    /** 用户ID */
     id?: number
-    /** 用户头像 */
     userAvatar?: string
-    /** 用户昵称 */
     userName?: string
-    /** 用户简介 */
     userProfile?: string
-    /** 用户角色：user/admin */
     userRole?: string
   }
 

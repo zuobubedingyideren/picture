@@ -436,7 +436,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * @return 成功创建的图片数
      */
     @Override
-    public Integer uploadPictureByBatch(com.px.picturebacked.model.dto.picture.PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser) {
+    public Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser) {
         String searchText = pictureUploadByBatchRequest.getSearchText();
         String namePrefix = pictureUploadByBatchRequest.getNamePrefix();
         if (StrUtil.isBlank(namePrefix)) {

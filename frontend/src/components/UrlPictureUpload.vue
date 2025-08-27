@@ -11,7 +11,7 @@
       </a-button>
     </a-input-group>
     <div class="img-wrapper">
-      <img v-if="picture?.url" :src="convertImageUrl(picture?.url)" alt="avatar" />
+      <img v-if="picture?.url" :src="picture?.url" alt="avatar" />
     </div>
   </div>
 </template>
@@ -19,7 +19,6 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { uploadPictureByUrlUsingPost } from '@/api/pictureController.ts'
-import { convertImageUrl } from '@/utils/imageUtils'
 
 interface Props {
   picture?: API.PictureVO

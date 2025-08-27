@@ -6,7 +6,7 @@
       <template #cover>
         <img
           :alt="picture.name"
-          :src="convertImageUrl(picture.thumbnailUrl ?? picture.url)"
+          :src="picture.thumbnailUrl ?? picture.url"
           style="height: 180px; object-fit: cover"
         />
       </template>
@@ -26,7 +26,7 @@
               <template #cover>
                 <img
                   :alt="picture.name"
-                  :src="convertImageUrl(picture.thumbUrl)"
+                  :src="picture.thumbUrl"
                   style="height: 180px; object-fit: cover"
                 />
               </template>
@@ -46,7 +46,6 @@ import {
 } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
 import { useRoute } from 'vue-router'
-import { convertImageUrl } from '@/utils/imageUtils'
 
 const route = useRoute()
 

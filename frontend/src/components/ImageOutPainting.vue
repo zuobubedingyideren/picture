@@ -9,13 +9,13 @@
     <a-row gutter="16">
       <a-col span="12">
         <h4>原始图片</h4>
-        <img :src="convertImageUrl(picture?.url)" :alt="picture?.name" style="max-width: 100%" />
+        <img :src="picture?.url" :alt="picture?.name" style="max-width: 100%" />
       </a-col>
       <a-col span="12">
         <h4>扩图结果</h4>
         <img
           v-if="resultImageUrl"
-          :src="convertImageUrl(resultImageUrl)"
+          :src="resultImageUrl"
           :alt="picture?.name"
           style="max-width: 100%"
         />
@@ -39,7 +39,6 @@ import {
   uploadPictureByUrlUsingPost,
 } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
-import { convertImageUrl } from '@/utils/imageUtils'
 
 interface Props {
   picture?: API.PictureVO

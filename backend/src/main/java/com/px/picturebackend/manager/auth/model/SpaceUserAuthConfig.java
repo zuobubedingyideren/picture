@@ -26,7 +26,7 @@ public class SpaceUserAuthConfig implements Serializable {
     /**
      * 角色列表
      */
-    private List<com.px.picturebacked.manager.auth.model.SpaceUserRole> roles;
+    private List<SpaceUserRole> roles;
 
     @Serial
     private static final long serialVersionUID = 1L;
