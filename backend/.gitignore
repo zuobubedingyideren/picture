@@ -38,3 +38,5 @@ build/
 
 ### 项目规则 ###
 .lingma/
+
+.trae/

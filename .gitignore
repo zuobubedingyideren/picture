@@ -77,3 +77,11 @@ Thumbs.db
 # Temporary directories that might be created during migration
 yu-picture-frontend/
 yu-picture-backend/
+.trae/documents
+扩展.md
+
+
+backend/docs/
+docs/
+
+.trae/rules/project_rules.md

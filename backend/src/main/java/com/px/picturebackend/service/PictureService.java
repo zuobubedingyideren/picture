@@ -1,6 +1,6 @@
 package com.px.picturebackend.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.px.picturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
@@ -45,7 +45,7 @@ public interface PictureService extends IService<Picture> {
      * @param pictureQueryRequest 图片查询请求参数
      * @return 返回封装好的查询条件对象
      */
-    QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
+    LambdaQueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
 
     /**
      * 获取图片的VO对象
