@@ -24,7 +24,13 @@ public enum ErrorCode {
     FORBIDDEN_ERROR(40300, "禁止访问"),
     SYSTEM_ERROR(50000, "系统内部异常"),
     OPERATION_ERROR(50001, "操作失败"),
-    TOO_MANY_REQUESTS_ERROR(42900, "请求过于频繁");
+    TOO_MANY_REQUESTS_ERROR(42900, "请求过于频繁"),
+    
+    // COS相关错误码
+    FILE_SIZE_EXCEEDED(40002, "文件大小超过限制，最大允许%dMB"),
+    FILE_UPLOAD_FAILED(50002, "文件上传失败：%s"),
+    FILE_TYPE_NOT_SUPPORTED(40003, "不支持的文件类型：%s"),
+    COS_CONFIG_ERROR(50003, "COS配置错误：%s");
 
     /**
      * 状态码

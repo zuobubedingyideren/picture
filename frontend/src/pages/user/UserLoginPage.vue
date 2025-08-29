@@ -45,17 +45,90 @@ const loginUserStore = useLoginUserStore()
  * @param values
  */
 const handleSubmit = async (values: any) => {
-  const res = await userLoginUsingPost(values)
-  // 登录成功，把登录态保存到全局状态中
-  if (res.data.code === 0 && res.data.data) {
-    await loginUserStore.fetchLoginUser()
-    message.success('登录成功')
-    router.push({
-      path: '/',
-      replace: true,
-    })
-  } else {
-    message.error('登录失败，' + res.data.message)
+  try {
+    const res = await userLoginUsingPost(values)
+    console.log('登录API响应:', res)
+    
+    // 检查响应格式：后端返回BaseResponse<LoginUserVO>，成功时code为0
+    if (res.data && res.data.code === 0 && res.data.data) {
+      // 登录成功，把登录态保存到全局状态中
+      await loginUserStore.fetchLoginUser()
+      message.success('登录成功，欢迎回来！')
+      router.push({
+        path: '/',
+        replace: true,
+      })
+    } else {
+      // 登录失败，根据错误码提供具体的错误信息
+      let errorMsg = '登录失败，请稍后重试'
+      
+      if (res.data) {
+        switch (res.data.code) {
+          case 40000:
+            errorMsg = res.data.message || '用户不存在或密码错误，请检查账号密码'
+            break
+          case 40001:
+            errorMsg = '参数错误，请检查输入信息'
+            break
+          case 40100:
+            errorMsg = '未登录，请重新登录'
+            break
+          case 40300:
+            errorMsg = '无权限访问'
+            break
+          case 50000:
+            errorMsg = '服务器内部错误，请稍后重试'
+            break
+          default:
+            errorMsg = res.data.message || '登录失败，请稍后重试'
+        }
+      }
+      
+      console.warn('登录失败:', res.data)
+      message.error(errorMsg)
+    }
+  } catch (error) {
+    console.error('登录请求异常:', error)
+    
+    // 网络异常或其他错误
+    if (error.response) {
+      // 服务器返回了错误状态码
+      const status = error.response.status
+      let errorMsg = '服务器错误，请稍后重试'
+      
+      switch (status) {
+        case 400:
+          errorMsg = '请求参数错误，请检查输入信息'
+          break
+        case 401:
+          errorMsg = '认证失败，请检查账号密码'
+          break
+        case 403:
+          errorMsg = '访问被拒绝，请联系管理员'
+          break
+        case 404:
+          errorMsg = '服务不存在，请联系技术支持'
+          break
+        case 500:
+          errorMsg = '服务器内部错误，请稍后重试'
+          break
+        case 502:
+        case 503:
+        case 504:
+          errorMsg = '服务暂时不可用，请稍后重试'
+          break
+        default:
+          errorMsg = error.response.data?.message || `服务器错误 (${status})，请稍后重试`
+      }
+      
+      message.error(errorMsg)
+    } else if (error.request) {
+      // 请求发出但没有收到响应
+      message.error('网络连接失败，请检查网络连接后重试')
+    } else {
+      // 其他错误
+      message.error('登录失败，请稍后重试')
+    }
   }
 }
 </script>

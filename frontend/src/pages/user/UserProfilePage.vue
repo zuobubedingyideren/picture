@@ -102,8 +102,8 @@ const rules = {
 const fetchUserInfo = async () => {
   try {
     const res = await getLoginUserUsingGet()
-    if (res.data.code === 0 && res.data.data) {
-      const userData = res.data.data
+    if (res.data) {
+      const userData = res.data
       userForm.userName = userData.userName || ''
       userForm.userAvatar = userData.userAvatar || ''
       userForm.userProfile = userData.userProfile || ''
@@ -187,9 +187,12 @@ const handleSubmit = async () => {
       message.success('个人信息更新成功')
       // 刷新全局状态中的用户信息
       await loginUserStore.fetchLoginUser()
+    } else {
+      message.error('更新失败，请重试')
     }
   } catch (error) {
     message.error('更新失败，请重试')
+    console.error('更新用户信息失败:', error)
   } finally {
     loading.value = false
   }

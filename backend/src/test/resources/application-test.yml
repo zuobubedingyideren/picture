@@ -1,0 +1,35 @@
+# 测试环境配置
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+# 阿里云AI配置（测试环境使用Mock值）
+ai:
+  qianwen:
+    apiKey: test-api-key
+
+# 腾讯云COS配置（测试环境使用Mock值）
+cos:
+  client:
+    host: https://test-bucket.cos.ap-test.myqcloud.com
+    secretId: test-secret-id
+    secretKey: test-secret-key
+    region: ap-test
+    bucket: test-bucket
+
+# 日志配置
+logging:
+  level:
+    com.px.picturebackend: DEBUG
+    org.springframework.web: DEBUG
+    com.qcloud.cos: DEBUG

@@ -123,25 +123,46 @@ const onSuccess = (newPicture: API.PictureVO) => {
  * @param values
  */
 const handleSubmit = async (values: any) => {
-  console.log(values)
-  const pictureId = picture.value.id
-  if (!pictureId) {
+  console.log('提交表单数据:', values)
+  console.log('当前图片对象:', picture.value)
+  
+  // 检查图片是否已上传
+  if (!picture.value) {
+    message.error('请先上传图片')
     return
   }
-  const res = await editPictureUsingPost({
-    id: pictureId,
-    spaceId: spaceId.value,
-    ...values,
-  })
-  // 操作成功
-  if (res.data.code === 0 && res.data.data) {
-    message.success('创建成功')
-    // 跳转到图片详情页
-    router.push({
-      path: `/picture/${pictureId}`,
+  
+  const pictureId = picture.value.id
+  console.log('图片ID:', pictureId)
+  
+  // 检查图片ID是否存在
+  if (!pictureId) {
+    message.error('图片ID不存在，请重新上传图片')
+    return
+  }
+  
+  try {
+    const res = await editPictureUsingPost({
+      id: pictureId,
+      spaceId: spaceId.value,
+      ...values,
     })
-  } else {
-    message.error('创建失败，' + res.data.message)
+    
+    console.log('API响应:', res)
+    
+    // 操作成功
+    if (res.data.code === 0 && res.data.data) {
+      message.success('创建成功')
+      // 跳转到图片详情页
+      router.push({
+        path: `/picture/${pictureId}`,
+      })
+    } else {
+      message.error('创建失败，' + res.data.message)
+    }
+  } catch (error) {
+    console.error('提交失败:', error)
+    message.error('提交失败，请稍后重试')
   }
 }
 

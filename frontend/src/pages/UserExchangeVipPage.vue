@@ -23,11 +23,11 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import { exchangeVipUsingPost } from '@/api/userController.ts'
+// import { exchangeVipUsingPost } from '@/api/userController.ts'
 import { useRouter } from 'vue-router'
 
 // 表单数据
-const formData = reactive<API.VipExchangeRequest>({
+const formData = reactive<any>({
   vipCode: '',
 })
 
@@ -49,21 +49,27 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    // 调用兑换 API
-    const res = await exchangeVipUsingPost({
-      vipCode: formData.vipCode,
-    })
+    // TODO: 调用兑换 API (函数不存在，暂时注释)
+    // const res = await exchangeVipUsingPost({
+    //   vipCode: formData.vipCode,
+    // })
 
+    // 临时处理：直接显示成功消息
+    message.success('兑换功能暂未实现')
+    router.push({
+      path: `/`,
+    })
+    
     // 操作成功
-    if (res.data.code === 0 && res.data.data) {
-      message.success('兑换成功！')
-      // 跳转到主页或其他页面
-      router.push({
-        path: `/`,
-      })
-    } else {
-      message.error('兑换失败：' + res.data.message)
-    }
+    // if (res.data.code === 0 && res.data.data) {
+    //   message.success('兑换成功！')
+    //   // 跳转到主页或其他页面
+    //   router.push({
+    //     path: `/`,
+    //   })
+    // } else {
+    //   message.error('兑换失败：' + res.data.message)
+    // }
   } catch (error) {
     message.error('兑换失败，请稍后重试')
   } finally {

@@ -73,3 +73,7 @@ cos:
     secretKey: ${TENCENT_COS_SECRET_KEY:}
     region: ap-chongqing
     bucket: picture-1356335042
+    # 分块上传配置
+    multipartUploadThreshold: 10485760  # 10MB，文件大小超过此值时使用分块上传
+    partSize: 2097152                   # 2MB，每个分块的大小
+    threadPoolSize: 5                   # 线程池大小，用于并发上传分块

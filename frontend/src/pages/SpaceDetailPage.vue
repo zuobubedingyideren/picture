@@ -119,7 +119,7 @@ const canDeletePicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_D
 const fetchSpaceDetail = async () => {
   try {
     const res = await getSpaceVoByIdUsingGet({
-      id: props.id,
+      id: Number(props.id),
     })
     if (res.data.code === 0 && res.data.data) {
       space.value = res.data.data
@@ -155,7 +155,7 @@ const fetchData = async () => {
   loading.value = true
   // 转换搜索参数
   const params = {
-    spaceId: props.id,
+    spaceId: Number(props.id),
     ...searchParams.value,
   }
   const res = await listPictureVoByPageUsingPost(params)

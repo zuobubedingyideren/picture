@@ -1,0 +1,40 @@
+# 测试环境配置
+# 用于集成测试的COS配置
+
+# 阿里云AI配置（测试环境可以使用mock值）
+aliYunAi:
+  apiKey: test-ali-yun-ai-api-key
+
+# 腾讯云COS配置（测试环境）
+cos:
+  client:
+    host: https://picture-1356335042.cos.ap-chongqing.myqcloud.com
+    secretId: test-secret-id
+    secretKey: test-secret-key
+    region: ap-chongqing
+    bucket: test-picture-bucket
+    # 分块上传配置
+    multipartUploadThreshold: 10485760  # 10MB
+    partSize: 2097152                   # 2MB
+    threadPoolSize: 5                   # 线程池大小
+
+# 测试环境数据库配置（如果需要）
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.px.picturebackend: DEBUG
+    com.qcloud.cos: DEBUG
