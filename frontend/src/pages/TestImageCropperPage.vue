@@ -2,31 +2,31 @@
   <div id="testImageCropperPage">
     <h2>测试 ImageCropper 组件</h2>
     <p>测试COS图片URL: {{ testImageUrl }}</p>
-    
+
     <a-space direction="vertical" size="large" style="width: 100%">
       <a-button type="primary" @click="openImageCropper">打开图片编辑器</a-button>
-      
+
       <div>
         <h3>直接图片显示测试:</h3>
-        <img 
-          :src="testImageUrl" 
+        <img
+          :src="testImageUrl"
           style="max-width: 300px; max-height: 200px; border: 1px solid #ccc;"
           @load="onDirectImageLoad"
           @error="onDirectImageError"
         />
       </div>
-      
+
       <div>
         <h3>代理图片显示测试:</h3>
-        <img 
-          :src="proxyImageUrl" 
+        <img
+          :src="proxyImageUrl"
           style="max-width: 300px; max-height: 200px; border: 1px solid #ccc;"
           @load="onProxyImageLoad"
           @error="onProxyImageError"
         />
       </div>
     </a-space>
-    
+
     <ImageCropper
       ref="imageCropperRef"
       :imageUrl="testImageUrl"

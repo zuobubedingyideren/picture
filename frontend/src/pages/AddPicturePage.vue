@@ -127,31 +127,31 @@ const onSuccess = (newPicture: API.PictureVO) => {
 const handleSubmit = async (values: any) => {
   console.log('提交表单数据:', values)
   console.log('当前图片对象:', picture.value)
-  
+
   // 检查图片是否已上传
   if (!picture.value) {
     message.error('请先上传图片')
     return
   }
-  
+
   const pictureId = picture.value.id
   console.log('图片ID:', pictureId)
-  
+
   // 检查图片ID是否存在
   if (!pictureId) {
     message.error('图片ID不存在，请重新上传图片')
     return
   }
-  
+
   try {
     const res = await editPictureUsingPost({
       id: pictureId,
       spaceId: spaceId.value,
       ...values,
     })
-    
+
     console.log('API响应:', res)
-    
+
     // 操作成功
     if (res.data.code === 0 && res.data.data) {
       message.success('创建成功')

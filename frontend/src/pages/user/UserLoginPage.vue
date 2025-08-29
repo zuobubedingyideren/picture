@@ -48,7 +48,7 @@ const handleSubmit = async (values: any) => {
   try {
     const res = await userLoginUsingPost(values)
     console.log('登录API响应:', res)
-    
+
     // 检查响应格式：后端返回BaseResponse<LoginUserVO>，成功时code为0
     if (res.data && res.data.code === 0 && res.data.data) {
       // 登录成功，把登录态保存到全局状态中
@@ -61,7 +61,7 @@ const handleSubmit = async (values: any) => {
     } else {
       // 登录失败，根据错误码提供具体的错误信息
       let errorMsg = '登录失败，请稍后重试'
-      
+
       if (res.data) {
         switch (res.data.code) {
           case 40000:
@@ -83,19 +83,19 @@ const handleSubmit = async (values: any) => {
             errorMsg = res.data.message || '登录失败，请稍后重试'
         }
       }
-      
+
       console.warn('登录失败:', res.data)
       message.error(errorMsg)
     }
   } catch (error) {
     console.error('登录请求异常:', error)
-    
+
     // 网络异常或其他错误
     if (error.response) {
       // 服务器返回了错误状态码
       const status = error.response.status
       let errorMsg = '服务器错误，请稍后重试'
-      
+
       switch (status) {
         case 400:
           errorMsg = '请求参数错误，请检查输入信息'
@@ -120,7 +120,7 @@ const handleSubmit = async (values: any) => {
         default:
           errorMsg = error.response.data?.message || `服务器错误 (${status})，请稍后重试`
       }
-      
+
       message.error(errorMsg)
     } else if (error.request) {
       // 请求发出但没有收到响应
