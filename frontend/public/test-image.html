@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片加载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        img {
+            max-width: 300px;
+            max-height: 200px;
+            border: 2px solid #ccc;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>图片加载测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 直接COS图片测试</h2>
+        <p>URL: <span id="cos-url">https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp</span></p>
+        <img id="cos-img" src="https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp" alt="COS图片">
+        <div id="cos-result">加载中...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 代理图片测试</h2>
+        <p>URL: <span id="proxy-url">http://localhost:8123/api/picture/proxy?url=...</span></p>
+        <img id="proxy-img" alt="代理图片">
+        <div id="proxy-result">准备加载...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Fallback机制测试</h2>
+        <img id="fallback-img" alt="Fallback测试图片">
+        <div id="fallback-result">准备测试...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 控制台日志</h2>
+        <div id="console-log"></div>
+    </div>
+
+    <script>
+        const cosUrl = 'https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp';
+        const proxyUrl = `http://localhost:8123/api/picture/proxy?url=${encodeURIComponent(cosUrl)}`;
+        
+        function log(message, type = 'info') {
+            console.log(message);
+            const logDiv = document.getElementById('console-log');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logDiv.appendChild(p);
+        }
+        
+        // 1. 测试直接COS图片
+        const cosImg = document.getElementById('cos-img');
+        const cosResult = document.getElementById('cos-result');
+        
+        cosImg.onload = function() {
+            cosResult.innerHTML = '<span class="success">✅ COS图片加载成功</span>';
+            log('✅ COS图片加载成功', 'success');
+        };
+        
+        cosImg.onerror = function(e) {
+            cosResult.innerHTML = '<span class="error">❌ COS图片加载失败</span>';
+            log('❌ COS图片加载失败: ' + e.type, 'error');
+            
+            // 开始测试代理图片
+            testProxyImage();
+        };
+        
+        // 2. 测试代理图片
+        function testProxyImage() {
+            const proxyImg = document.getElementById('proxy-img');
+            const proxyResult = document.getElementById('proxy-result');
+            const proxyUrlSpan = document.getElementById('proxy-url');
+            
+            proxyUrlSpan.textContent = proxyUrl;
+            proxyResult.innerHTML = '<span class="info">🔄 正在加载代理图片...</span>';
+            log('🔄 开始测试代理图片: ' + proxyUrl, 'info');
+            
+            proxyImg.onload = function() {
+                proxyResult.innerHTML = '<span class="success">✅ 代理图片加载成功</span>';
+                log('✅ 代理图片加载成功', 'success');
+            };
+            
+            proxyImg.onerror = function(e) {
+                proxyResult.innerHTML = '<span class="error">❌ 代理图片加载失败</span>';
+                log('❌ 代理图片加载失败: ' + e.type, 'error');
+            };
+            
+            proxyImg.src = proxyUrl;
+        }
+        
+        // 3. 测试Fallback机制
+        function testFallback() {
+            const fallbackImg = document.getElementById('fallback-img');
+            const fallbackResult = document.getElementById('fallback-result');
+            
+            let attemptedProxy = false;
+            
+            function tryOriginal() {
+                fallbackResult.innerHTML = '<span class="info">🔄 尝试加载原始COS图片...</span>';
+                log('🔄 Fallback测试: 尝试原始图片', 'info');
+                
+                fallbackImg.onload = function() {
+                    fallbackResult.innerHTML = '<span class="success">✅ Fallback测试: 原始图片成功</span>';
+                    log('✅ Fallback测试: 原始图片加载成功', 'success');
+                };
+                
+                fallbackImg.onerror = function() {
+                    if (!attemptedProxy) {
+                        attemptedProxy = true;
+                        tryProxy();
+                    } else {
+                        fallbackResult.innerHTML = '<span class="error">❌ Fallback测试: 所有方式都失败</span>';
+                        log('❌ Fallback测试: 所有加载方式都失败', 'error');
+                    }
+                };
+                
+                fallbackImg.src = cosUrl;
+            }
+            
+            function tryProxy() {
+                fallbackResult.innerHTML = '<span class="info">🔄 Fallback: 尝试代理图片...</span>';
+                log('🔄 Fallback测试: 尝试代理图片', 'info');
+                
+                fallbackImg.onload = function() {
+                    fallbackResult.innerHTML = '<span class="success">✅ Fallback测试: 代理图片成功</span>';
+                    log('✅ Fallback测试: 代理图片加载成功', 'success');
+                };
+                
+                fallbackImg.onerror = function() {
+                    fallbackResult.innerHTML = '<span class="error">❌ Fallback测试: 代理图片也失败</span>';
+                    log('❌ Fallback测试: 代理图片加载失败', 'error');
+                };
+                
+                fallbackImg.src = proxyUrl;
+            }
+            
+            tryOriginal();
+        }
+        
+        // 页面加载完成后开始测试
+        window.onload = function() {
+            log('🔧 页面加载完成，开始测试', 'info');
+            
+            // 延迟启动fallback测试
+            setTimeout(testFallback, 2000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试图片Fallback机制</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .image-container {
+            margin: 10px 0;
+        }
+        .test-image {
+            max-width: 300px;
+            max-height: 200px;
+            border: 1px solid #ccc;
+            margin: 5px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>图片Fallback机制测试</h1>
+        <p>测试ImageCropper组件的图片加载失败时的fallback机制</p>
+        
+        <div class="test-section">
+            <h3>1. 测试不存在的COS图片（应该触发fallback）</h3>
+            <div class="image-container">
+                <img id="test-image-1" class="test-image" 
+                     src="https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/nonexistent/test.webp" 
+                     alt="不存在的图片">
+            </div>
+            <p>原始URL: <span id="original-url-1">https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/nonexistent/test.webp</span></p>
+            <p>代理URL: <span id="proxy-url-1">http://localhost:8123/api/picture/proxy?url=https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/nonexistent/test.webp</span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 测试存在的代理图片（应该正常显示）</h3>
+            <div class="image-container">
+                <img id="test-image-2" class="test-image" 
+                     src="http://localhost:8123/api/picture/proxy?url=https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp" 
+                     alt="代理图片">
+            </div>
+            <p>代理URL: <span id="proxy-url-2">http://localhost:8123/api/picture/proxy?url=https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp</span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. 测试默认图片（最终fallback）</h3>
+            <div class="image-container">
+                <img id="test-image-3" class="test-image" 
+                     src="https://via.placeholder.com/300x200/cccccc/666666?text=Default+Image" 
+                     alt="默认图片">
+            </div>
+            <p>默认图片URL: <span id="default-url">https://via.placeholder.com/300x200/cccccc/666666?text=Default+Image</span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 模拟ImageCropper的Fallback逻辑</h3>
+            <div class="image-container">
+                <img id="fallback-test" class="test-image" alt="Fallback测试">
+            </div>
+            <button onclick="testFallbackLogic()">开始Fallback测试</button>
+            <div id="fallback-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. 测试后端代理接口</h3>
+            <button onclick="testProxyApi()">测试代理接口</button>
+            <div id="proxy-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>控制台日志</h3>
+            <div id="console-log" class="log"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('console-log');
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // 图片加载事件监听
+        function setupImageListeners() {
+            const images = document.querySelectorAll('.test-image');
+            images.forEach((img, index) => {
+                img.onload = function() {
+                    log(`图片 ${index + 1} 加载成功: ${this.src}`, 'success');
+                };
+                img.onerror = function() {
+                    log(`图片 ${index + 1} 加载失败: ${this.src}`, 'error');
+                };
+            });
+        }
+        
+        // 模拟ImageCropper的fallback逻辑
+        function testFallbackLogic() {
+            const img = document.getElementById('fallback-test');
+            const logElement = document.getElementById('fallback-log');
+            logElement.innerHTML = '';
+            
+            function fallbackLog(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = type;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                logElement.appendChild(logEntry);
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+            
+            // 第一步：尝试加载原始COS图片
+            const originalUrl = 'https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/nonexistent/test.webp';
+            fallbackLog('开始测试fallback逻辑', 'info');
+            fallbackLog(`尝试加载原始图片: ${originalUrl}`, 'info');
+            
+            img.onload = function() {
+                fallbackLog(`原始图片加载成功: ${this.src}`, 'success');
+            };
+            
+            img.onerror = function() {
+                fallbackLog(`原始图片加载失败: ${this.src}`, 'error');
+                
+                // 第二步：尝试代理URL
+                const proxyUrl = `http://localhost:8123/api/picture/proxy?url=${encodeURIComponent(originalUrl)}`;
+                fallbackLog(`尝试代理URL: ${proxyUrl}`, 'warning');
+                
+                this.onload = function() {
+                    fallbackLog(`代理图片加载成功: ${this.src}`, 'success');
+                };
+                
+                this.onerror = function() {
+                    fallbackLog(`代理图片也加载失败: ${this.src}`, 'error');
+                    
+                    // 第三步：使用默认图片
+                    const defaultUrl = 'https://via.placeholder.com/300x200/cccccc/666666?text=Fallback+Success';
+                    fallbackLog(`使用默认图片: ${defaultUrl}`, 'warning');
+                    
+                    this.onload = function() {
+                        fallbackLog(`默认图片加载成功: ${this.src}`, 'success');
+                        fallbackLog('Fallback机制测试完成', 'success');
+                    };
+                    
+                    this.onerror = function() {
+                        fallbackLog(`默认图片也加载失败: ${this.src}`, 'error');
+                        fallbackLog('Fallback机制完全失败', 'error');
+                    };
+                    
+                    this.src = defaultUrl;
+                };
+                
+                this.src = proxyUrl;
+            };
+            
+            img.src = originalUrl;
+        }
+        
+        // 测试代理API
+        async function testProxyApi() {
+            const logElement = document.getElementById('proxy-log');
+            logElement.innerHTML = '';
+            
+            function proxyLog(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = type;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                logElement.appendChild(logEntry);
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+            
+            const testUrls = [
+                'https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp',
+                'https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/nonexistent/test.webp'
+            ];
+            
+            for (const url of testUrls) {
+                try {
+                    proxyLog(`测试代理接口: ${url}`, 'info');
+                    const proxyUrl = `http://localhost:8123/api/picture/proxy?url=${encodeURIComponent(url)}`;
+                    
+                    const response = await fetch(proxyUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        proxyLog(`代理接口响应成功: ${response.status}`, 'success');
+                    } else {
+                        proxyLog(`代理接口响应失败: ${response.status} ${response.statusText}`, 'error');
+                    }
+                } catch (error) {
+                    proxyLog(`代理接口请求异常: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // 页面加载完成后初始化
+        window.onload = function() {
+            log('页面加载完成，开始测试', 'info');
+            setupImageListeners();
+        };
+    </script>
+</body>
+</html>

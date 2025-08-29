@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试ImageCropper组件</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        .image-test {
+            max-width: 300px;
+            max-height: 200px;
+            border: 2px solid #d9d9d9;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .log-output {
+            background: #f6f6f6;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .status.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status.error { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+        .status.warning { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+        .status.info { background: #f0f9ff; color: #1890ff; border: 1px solid #91d5ff; }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ImageCropper组件Fallback机制测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 原始COS图片测试</h3>
+            <p>测试URL: <code id="original-url"></code></p>
+            <img id="original-img" class="image-test" alt="原始COS图片">
+            <div id="original-status" class="status info">等待测试...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 后端代理图片测试</h3>
+            <p>代理URL: <code id="proxy-url"></code></p>
+            <img id="proxy-img" class="image-test" alt="代理图片">
+            <div id="proxy-status" class="status info">等待测试...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Fallback机制模拟测试</h3>
+            <button onclick="testFallbackMechanism()">开始Fallback测试</button>
+            <div id="fallback-status" class="status info">点击按钮开始测试...</div>
+            <img id="fallback-img" class="image-test" alt="Fallback测试图片" style="display:none;">
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 后端代理接口测试</h3>
+            <button onclick="testProxyAPI()">测试代理接口</button>
+            <div id="api-status" class="status info">点击按钮开始测试...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. 控制台日志</h3>
+            <button onclick="clearLogs()">清空日志</button>
+            <div id="console-logs" class="log-output">等待日志输出...</div>
+        </div>
+    </div>
+
+    <script>
+        // 测试用的COS图片URL
+        const originalImageUrl = 'https://picture-1356335042.cos.ap-chongqing.myqcloud.com/public/1955263849267466241/2025-08-28_8jMkDr6jvDbp0UCc.webp';
+        const proxyImageUrl = `/api/picture/proxy?url=${encodeURIComponent(originalImageUrl)}`;
+        
+        // 日志输出函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('console-logs');
+            const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[ImageCropper Test] ${logMessage.trim()}`);
+        }
+        
+        function clearLogs() {
+            document.getElementById('console-logs').textContent = '日志已清空...\n';
+        }
+        
+        function updateStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+        
+        // 初始化页面
+        function initPage() {
+            document.getElementById('original-url').textContent = originalImageUrl;
+            document.getElementById('proxy-url').textContent = proxyImageUrl;
+            
+            log('页面初始化完成');
+            log(`原始图片URL: ${originalImageUrl}`);
+            log(`代理图片URL: ${proxyImageUrl}`);
+            
+            // 测试原始图片
+            testOriginalImage();
+            // 测试代理图片
+            testProxyImage();
+        }
+        
+        // 测试原始COS图片
+        function testOriginalImage() {
+            log('开始测试原始COS图片...');
+            const img = document.getElementById('original-img');
+            
+            img.onload = function() {
+                log('原始COS图片加载成功', 'success');
+                updateStatus('original-status', '✅ 原始图片加载成功', 'success');
+            };
+            
+            img.onerror = function(error) {
+                log(`原始COS图片加载失败: ${error.type}`, 'error');
+                updateStatus('original-status', '❌ 原始图片加载失败 (CORS或网络问题)', 'error');
+            };
+            
+            img.src = originalImageUrl;
+        }
+        
+        // 测试代理图片
+        function testProxyImage() {
+            log('开始测试代理图片...');
+            const img = document.getElementById('proxy-img');
+            
+            img.onload = function() {
+                log('代理图片加载成功', 'success');
+                updateStatus('proxy-status', '✅ 代理图片加载成功', 'success');
+            };
+            
+            img.onerror = function(error) {
+                log(`代理图片加载失败: ${error.type}`, 'error');
+                updateStatus('proxy-status', '❌ 代理图片加载失败', 'error');
+            };
+            
+            img.src = proxyImageUrl;
+        }
+        
+        // 测试Fallback机制
+        function testFallbackMechanism() {
+            log('开始测试Fallback机制...');
+            updateStatus('fallback-status', '🔄 正在测试Fallback机制...', 'info');
+            
+            const img = document.getElementById('fallback-img');
+            img.style.display = 'block';
+            
+            let fallbackTriggered = false;
+            
+            img.onload = function() {
+                if (fallbackTriggered) {
+                    log('Fallback机制成功：代理图片加载成功', 'success');
+                    updateStatus('fallback-status', '✅ Fallback机制正常：代理图片加载成功', 'success');
+                } else {
+                    log('意外：原始图片直接加载成功', 'warning');
+                    updateStatus('fallback-status', '⚠️ 原始图片直接加载成功（无需Fallback）', 'warning');
+                }
+            };
+            
+            img.onerror = function(error) {
+                if (!fallbackTriggered) {
+                    log('原始图片加载失败，触发Fallback机制...', 'warning');
+                    fallbackTriggered = true;
+                    
+                    // 模拟ImageCropper的fallback逻辑
+                    if (originalImageUrl.includes('cos.ap-chongqing.myqcloud.com')) {
+                        log('检测到COS图片，切换到代理URL...', 'info');
+                        img.src = proxyImageUrl;
+                    } else {
+                        log('非COS图片，Fallback机制不适用', 'error');
+                        updateStatus('fallback-status', '❌ Fallback机制测试失败', 'error');
+                    }
+                } else {
+                    log('Fallback失败：代理图片也无法加载', 'error');
+                    updateStatus('fallback-status', '❌ Fallback失败：代理图片也无法加载', 'error');
+                }
+            };
+            
+            // 开始测试：先尝试加载原始图片
+            img.src = originalImageUrl;
+        }
+        
+        // 测试后端代理接口
+        async function testProxyAPI() {
+            log('开始测试后端代理接口...');
+            updateStatus('api-status', '🔄 正在测试代理接口...', 'info');
+            
+            try {
+                const response = await fetch(proxyImageUrl, { method: 'HEAD' });
+                
+                if (response.ok) {
+                    log(`代理接口测试成功: ${response.status} ${response.statusText}`, 'success');
+                    log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+                    updateStatus('api-status', '✅ 代理接口正常工作', 'success');
+                } else {
+                    log(`代理接口返回错误: ${response.status} ${response.statusText}`, 'error');
+                    updateStatus('api-status', `❌ 代理接口错误: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`代理接口测试失败: ${error.message}`, 'error');
+                updateStatus('api-status', `❌ 代理接口测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

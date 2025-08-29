@@ -114,6 +114,8 @@ const spaceId = computed(() => {
  * @param newPicture
  */
 const onSuccess = (newPicture: API.PictureVO) => {
+  console.debug('AddPicturePage: 图片上传成功', newPicture)
+  console.debug('AddPicturePage: 图片URL', newPicture?.url)
   picture.value = newPicture
   pictureForm.name = newPicture.name
 }

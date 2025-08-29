@@ -41,6 +41,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -757,5 +763,107 @@ public class PictureController {
         }
         
         return picture;
+    }
+
+    // ==================== 图片代理接口 ====================
+
+    /**
+     * 图片代理接口
+     * 用于解决前端访问腾讯云COS图片的跨域问题
+     * 通过后端代理转发图片请求，避免CORS限制
+     *
+     * @param url      图片URL
+     * @param response HTTP响应对象
+     */
+    @ApiOperation("图片代理接口")
+    @GetMapping("/proxy")
+    public void proxyImage(@RequestParam("url") String url, HttpServletResponse response) {
+        log.info("代理访问图片URL：{}", url);
+        
+        // 参数校验
+        ThrowUtils.throwIf(StrUtil.isBlank(url), ErrorCode.PARAMS_ERROR, "图片URL不能为空");
+        
+        // 安全检查：只允许代理腾讯云COS的图片
+        if (!url.contains("cos.ap-chongqing.myqcloud.com")) {
+            log.warn("拒绝代理非腾讯云COS的图片URL：{}", url);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        
+        HttpURLConnection connection = null;
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        
+        try {
+            // 创建连接
+            URL imageUrl = new URL(url);
+            connection = (HttpURLConnection) imageUrl.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(10000); // 10秒连接超时
+            connection.setReadTimeout(30000);    // 30秒读取超时
+            
+            // 设置User-Agent，避免被服务器拒绝
+            connection.setRequestProperty("User-Agent", 
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            
+            // 检查响应状态
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                log.error("图片代理失败，HTTP状态码：{}，URL：{}", responseCode, url);
+                response.setStatus(responseCode);
+                return;
+            }
+            
+            // 获取内容类型
+            String contentType = connection.getContentType();
+            if (contentType != null && contentType.startsWith("image/")) {
+                response.setContentType(contentType);
+            } else {
+                response.setContentType("image/jpeg"); // 默认类型
+            }
+            
+            // 设置缓存头
+            response.setHeader("Cache-Control", "public, max-age=3600"); // 缓存1小时
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Methods", "GET");
+            
+            // 获取内容长度
+            int contentLength = connection.getContentLength();
+            if (contentLength > 0) {
+                response.setContentLength(contentLength);
+            }
+            
+            // 转发图片数据
+            inputStream = connection.getInputStream();
+            outputStream = response.getOutputStream();
+            
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            
+            outputStream.flush();
+            log.info("图片代理成功，URL：{}", url);
+            
+        } catch (IOException e) {
+            log.error("图片代理异常，URL：{}，错误：{}", url, e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } finally {
+            // 关闭资源
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            } catch (IOException e) {
+                log.error("关闭资源异常：{}", e.getMessage());
+            }
+        }
     }
 }

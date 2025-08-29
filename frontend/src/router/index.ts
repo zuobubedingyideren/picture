@@ -14,7 +14,8 @@ import SpaceDetailPage from "@/pages/SpaceDetailPage.vue";
 import SearchPicturePage from "@/pages/SearchPicturePage.vue";
 import SpaceAnalyzePage from "@/pages/SpaceAnalyzePage.vue";
 import SpaceUserManagePage from "@/pages/admin/SpaceUserManagePage.vue";
-import UserProfilePage from "@/pages/user/UserProfilePage.vue"; // @author 程序员鱼皮 <a href="https://www.codefather.cn">编程导航原创项目</a>
+import UserProfilePage from "@/pages/user/UserProfilePage.vue";
+import TestImageCropperPage from "@/pages/TestImageCropperPage.vue"; // @author 程序员鱼皮 <a href="https://www.codefather.cn">编程导航原创项目</a>
 
 // @author 程序员鱼皮 <a href="https://www.codefather.cn">编程导航原创项目</a>
 const router = createRouter({
@@ -102,6 +103,11 @@ const router = createRouter({
       path: '/search_picture',
       name: '图片搜索',
       component: SearchPicturePage,
+    },
+    {
+      path: '/test_image_cropper',
+      name: '测试图片编辑器',
+      component: TestImageCropperPage,
     },
     {
       path: '/about',
