@@ -132,6 +132,8 @@ const fetchSpaceDetail = async () => {
 }
 
 onMounted(() => {
+  console.log('SpaceDetailPage onMounted 被调用，路由参数 id:', props.id)
+  console.log('当前路由信息:', window.location.href)
   fetchSpaceDetail()
 })
 

@@ -10,6 +10,7 @@ let firstFetchLoginUser = true
  */
 router.beforeEach(async (to, from, next) => {
   try {
+    console.log('路由守卫执行:', { from: from.path, to: to.path, fullPath: to.fullPath })
     const loginUserStore = useLoginUserStore()
     let loginUser = loginUserStore.loginUser
     // 确保页面刷新时，首次加载时，能等待后端返回用户信息后再校验权限
@@ -27,10 +28,12 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
+    console.log('路由守卫放行:', toUrl)
     next()
   } catch (error) {
     console.warn('路由权限校验失败:', error)
     // 发生错误时仍然允许导航继续，避免路由卡死
+    console.log('路由守卫异常放行:', toUrl)
     next()
   }
 })

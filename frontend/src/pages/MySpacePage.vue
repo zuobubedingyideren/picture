@@ -43,15 +43,11 @@ const checkUserSpace = async () => {
     
     // 用户未登录，则直接跳转到登录页面
     const loginUser = loginUserStore.loginUser
-    console.log('当前登录用户:', loginUser)
     
     if (!loginUser?.id) {
-      console.log('用户未登录，跳转到登录页面')
       router.replace('/user/login')
       return
     }
-    
-    console.log('正在查询用户空间...', { userId: loginUser.id })
     
     // 如果用户已登录，会获取该用户已创建的空间
     const res = await listSpaceVoByPageUsingPost({
@@ -61,14 +57,17 @@ const checkUserSpace = async () => {
       spaceType: SPACE_TYPE_ENUM.PRIVATE,
     })
     
-    console.log('API响应:', res)
-    
-    if (res.data) {
+    if (res.data.code === 0 && res.data.data) {
       // 如果有，则进入第一个空间
-      if (res.data.records?.length > 0) {
-        const space = res.data.records[0]
-        console.log('找到用户空间，跳转到:', `/space/${space.id}`)
-        router.replace(`/space/${space.id}`)
+      if (res.data.data.records?.length > 0) {
+        const space = res.data.data.records[0]
+        
+        try {
+          await router.replace(`/space/${space.id}`)
+        } catch (routerError) {
+          console.error('路由跳转失败:', routerError)
+          error.value = '页面跳转失败: ' + routerError.message
+        }
       } else {
         // 如果没有，则跳转到创建空间页面
         console.log('用户没有空间，跳转到创建页面')
