@@ -1,6 +1,6 @@
 package com.px.picturebackend.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.px.picturebackend.common.DeleteRequest;
@@ -60,7 +60,7 @@ public interface SpaceService extends IService<Space> {
      * @param spaceQueryRequest 空间查询请求参数
      * @return 查询条件包装对象
      */
-    QueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest);
+    LambdaQueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest);
 
     /**
      * 根据空间等级填充空间信息（如最大容量、最大数量等）
