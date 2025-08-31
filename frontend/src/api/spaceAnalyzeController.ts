@@ -52,7 +52,7 @@ export async function getSpaceTagAnalyzeUsingPost(
   body: API.SpaceTagAnalyzeRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseListSpaceTagAnalyzeResponse_>('/api/space/analyze/tag', {
+  return request<API.BaseResponseListSpaceTagAnalyzeResponse_>('/api/space/analyze/tags', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
