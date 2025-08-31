@@ -1,8 +1,9 @@
 <template>
   <div id="spaceDetailPage">
     <!-- 空间信息 -->
-    <a-flex justify="space-between">
-      <h2>{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h2>
+    <a-spin :spinning="spaceLoading" tip="正在加载空间信息...">
+      <a-flex justify="space-between">
+        <h2>{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h2>
       <a-space size="middle">
         <a-button
           v-if="canUploadPicture"
@@ -13,7 +14,7 @@
           + 创建图片
         </a-button>
         <a-button
-          v-if="canManageSpaceUser"
+          v-if="canManageSpaceUser && space.spaceType !== 0"
           type="primary"
           ghost
           :icon="h(TeamOutlined)"
@@ -23,7 +24,7 @@
           成员管理
         </a-button>
         <a-button
-          v-if="canManageSpaceUser"
+          v-if="canManageSpaceUser && space.spaceType !== 0"
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
@@ -44,6 +45,7 @@
         </a-tooltip>
       </a-space>
     </a-flex>
+    </a-spin>
     <div style="margin-bottom: 16px" />
     <!-- 搜索表单 -->
     <PictureSearchForm :onSearch="onSearch" />
@@ -101,6 +103,36 @@ interface Props {
 
 const props = defineProps<Props>()
 const space = ref<API.SpaceVO>({})
+const spaceLoading = ref(false)
+const retryCount = ref(0)
+const maxRetries = 3
+
+// 验证ID参数是否有效（修复大整数精度丢失问题）
+const validateId = (id: string | number): boolean => {
+  if (id === null || id === undefined || id === '') {
+    console.error('SpaceDetailPage: ID参数为空')
+    return false
+  }
+
+  // 转换为字符串进行验证，避免大整数精度丢失
+  const idStr = String(id)
+
+  // 验证是否为纯数字字符串
+  if (!/^\d+$/.test(idStr)) {
+    console.error('SpaceDetailPage: ID参数格式无效:', id)
+    return false
+  }
+
+  // 验证是否为正数
+  if (idStr === '0' || idStr.startsWith('0')) {
+    console.error('SpaceDetailPage: ID参数不能为0或以0开头:', id)
+    return false
+  }
+
+  console.log('SpaceDetailPage: ID参数验证通过 (字符串):', idStr)
+  console.log('SpaceDetailPage: 原始ID类型:', typeof id, '值:', id)
+  return true
+}
 
 // 通用权限检查函数
 function createPermissionChecker(permission: string) {
@@ -116,24 +148,91 @@ const canEditPicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_EDI
 const canDeletePicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_DELETE)
 
 // -------- 获取空间详情 --------
-const fetchSpaceDetail = async () => {
+const fetchSpaceDetail = async (isRetry = false) => {
+  // 参数验证
+  if (!validateId(props.id)) {
+    message.error('空间ID参数无效，请检查URL中的ID是否正确')
+    return
+  }
+
+  // 使用字符串ID，避免大整数精度丢失
+  const spaceId = String(props.id)
+  console.log('SpaceDetailPage: 开始获取空间详情')
+  console.log('SpaceDetailPage: 原始ID:', props.id, '类型:', typeof props.id)
+  console.log('SpaceDetailPage: 传递给API的ID:', spaceId, '类型:', typeof spaceId)
+  console.log('SpaceDetailPage: 重试次数:', retryCount.value)
+
+  // 验证是否发生精度丢失
+  if (typeof props.id === 'string' && Number(props.id).toString() !== props.id) {
+    console.warn('SpaceDetailPage: 检测到大整数精度丢失风险，使用字符串传递ID')
+    console.warn('SpaceDetailPage: Number转换结果:', Number(props.id))
+    console.warn('SpaceDetailPage: 原始字符串:', props.id)
+  }
+
+  spaceLoading.value = true
+
   try {
     const res = await getSpaceVoByIdUsingGet({
-      id: Number(props.id),
+      id: spaceId,
     })
+
+    console.log('SpaceDetailPage: API响应:', res)
+
     if (res.data.code === 0 && res.data.data) {
       space.value = res.data.data
+      retryCount.value = 0 // 成功后重置重试次数
+      console.log('SpaceDetailPage: 空间详情获取成功:', space.value)
     } else {
-      message.error('获取空间详情失败，' + res.data.message)
+      const errorMsg = res.data.message || '未知错误'
+      console.error('SpaceDetailPage: API返回错误:', res.data)
+
+      if (res.data.code === 40400) {
+        message.error(`空间不存在或已被删除 (ID: ${spaceId})`)
+      } else if (res.data.code === 40300) {
+        message.error('没有权限访问该空间')
+      } else {
+        message.error(`获取空间详情失败: ${errorMsg}`)
+      }
     }
   } catch (e: any) {
-    message.error('获取空间详情失败：' + e.message)
+    console.error('SpaceDetailPage: 请求异常:', e)
+
+    let errorMessage = '获取空间详情失败'
+
+    if (e.code === 'NETWORK_ERROR' || e.message?.includes('Network Error')) {
+      errorMessage = '网络连接失败，请检查网络连接'
+    } else if (e.response?.status === 404) {
+      errorMessage = `空间不存在 (ID: ${spaceId})`
+    } else if (e.response?.status === 403) {
+      errorMessage = '没有权限访问该空间'
+    } else if (e.response?.status >= 500) {
+      errorMessage = '服务器内部错误，请稍后重试'
+    } else {
+      errorMessage = `请求失败: ${e.message || '未知错误'}`
+    }
+
+    // 重试机制
+    if (!isRetry && retryCount.value < maxRetries) {
+      retryCount.value++
+      console.log(`SpaceDetailPage: 准备重试 (${retryCount.value}/${maxRetries})`)
+      setTimeout(() => {
+        fetchSpaceDetail(true)
+      }, 1000 * retryCount.value) // 递增延迟重试
+    } else {
+      message.error(errorMessage)
+      if (retryCount.value >= maxRetries) {
+        message.warning('已达到最大重试次数，请手动刷新页面重试')
+      }
+    }
+  } finally {
+    spaceLoading.value = false
   }
 }
 
 onMounted(() => {
   console.log('SpaceDetailPage onMounted 被调用，路由参数 id:', props.id)
   console.log('当前路由信息:', window.location.href)
+  console.log('ID类型:', typeof props.id, '值:', props.id)
   fetchSpaceDetail()
 })
 
@@ -154,12 +253,14 @@ const searchParams = ref<API.PictureQueryRequest>({
 
 // 获取数据
 const fetchData = async () => {
-  loading.value = true
-  // 转换搜索参数
+     loading.value = true
+  // 使用字符串ID，避免大整数精度丢失
   const params = {
-    spaceId: Number(props.id),
+    spaceId: String(props.id),
     ...searchParams.value,
   }
+  console.log('SpaceDetailPage: fetchData - 传递给API的spaceId:', params.spaceId, '类型:', typeof params.spaceId)
+
   const res = await listPictureVoByPageUsingPost(params)
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
@@ -198,9 +299,12 @@ const onSearch = (newSearchParams: API.PictureQueryRequest) => {
 // 按照颜色搜索
 const onColorChange = async (color: string) => {
   loading.value = true
+  const spaceId = String(props.id)
+  console.log('SpaceDetailPage: onColorChange - 传递给API的spaceId:', spaceId, '类型:', typeof spaceId)
+
   const res = await searchPictureByColorUsingPost({
     picColor: color,
-    spaceId: props.id,
+    spaceId: spaceId,
   })
   if (res.data.code === 0 && res.data.data) {
     const data = res.data.data ?? []

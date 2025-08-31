@@ -221,8 +221,8 @@ declare namespace API {
   }
 
   type getSpaceVOByIdUsingGETParams = {
-    /** id */
-    id?: number
+    /** id - 支持字符串类型以避免大整数精度丢失 */
+    id?: string | number
   }
 
   type getUserByIdUsingGETParams = {
@@ -386,7 +386,7 @@ declare namespace API {
     searchText?: string
     sortField?: string
     sortOrder?: string
-    spaceId?: number
+    spaceId?: string | number
     startEditTime?: string
     tags?: string[]
     userId?: number
@@ -449,7 +449,7 @@ declare namespace API {
 
   type SearchPictureByColorRequest = {
     picColor?: string
-    spaceId?: number
+    spaceId?: string | number
   }
 
   type SearchPictureByPictureRequest = {
