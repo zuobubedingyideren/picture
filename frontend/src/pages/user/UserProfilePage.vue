@@ -7,10 +7,35 @@
           layout="vertical"
           @finish="handleSubmit"
         >
+        <!-- 用户ID - 只读显示 -->
+        <a-form-item label="用户ID" name="id">
+          <a-input-group compact class="user-id-group">
+            <a-input
+              :value="formattedUserId"
+              readonly
+              placeholder="系统自动生成"
+              class="readonly-field user-id-input"
+            />
+            <a-button
+              type="default"
+              :disabled="pageLoading || !userForm.id"
+              @click="copyUserId"
+              class="copy-button"
+              title="复制用户ID"
+            >
+              <CopyOutlined />
+            </a-button>
+          </a-input-group>
+        </a-form-item>
+
         <!-- 用户头像 -->
         <a-form-item label="头像" name="userAvatar">
           <div class="avatar-upload">
-            <a-avatar :size="80" :src="userForm.userAvatar" />
+            <a-avatar :size="80" :src="userForm.userAvatar">
+              <template #icon>
+                <UserOutlined />
+              </template>
+            </a-avatar>
             <a-upload
               name="avatar"
               list-type="picture-card"
@@ -67,9 +92,9 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
-import { UploadOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { LoadingOutlined, PlusOutlined, UserOutlined, CopyOutlined } from '@ant-design/icons-vue'
  import { getLoginUserUsingGet, updateMyInfoUsingPost } from '@/api/userController'
  import { uploadAvatarUsingPost } from '@/api/fileController'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
@@ -77,33 +102,45 @@ import { useLoginUserStore } from '@/stores/useLoginUserStore'
 const loginUserStore = useLoginUserStore()
 const formRef = ref()
 const loading = ref(false)
+// 页面初始加载状态
+const pageLoading = ref(true)
 
-// 表单数据
-const userForm = reactive<API.UserUpdateMyInfoRequest>({
+// 表单数据 - 扩展包含用户ID字段
+const userForm = reactive<API.UserUpdateMyInfoRequest & { id?: number }>({
   userName: '',
   userAvatar: '',
-  userProfile: ''
+  userProfile: '',
+  id: undefined  // 新增用户ID字段，仅用于显示
+})
+
+// 格式化用户ID显示
+const formattedUserId = computed(() => {
+  if (pageLoading.value) {
+    return '加载中...'
+  }
+  if (userForm.id && userForm.id > 0) {
+    return `${userForm.id}`
+  }
+  return '系统自动生成'
 })
 
 // 上传状态
 const uploading = ref(false)
 
-// 表单验证规则
-const rules = {
-  userName: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
-  ]
-}
+
 
 /**
  * 获取当前用户信息
  */
 const fetchUserInfo = async () => {
   try {
+    pageLoading.value = true
     const res = await getLoginUserUsingGet()
-    if (res.data) {
-      const userData = res.data
+    if (res.data && res.data.code === 0 && res.data.data) {
+      const userData = res.data.data
+      // 设置用户ID（只读显示）
+      userForm.id = userData.id || 0
+      // 设置可编辑字段
       userForm.userName = userData.userName || ''
       userForm.userAvatar = userData.userAvatar || ''
       userForm.userProfile = userData.userProfile || ''
@@ -113,6 +150,9 @@ const fetchUserInfo = async () => {
   } catch (error) {
     message.error('获取用户信息失败')
     console.error('获取用户信息失败:', error)
+  } finally {
+    // 无论成功还是失败，都结束加载状态
+    pageLoading.value = false
   }
 }
 
@@ -141,14 +181,14 @@ const beforeUpload = (file: File) => {
  */
 const customUpload = async (options: any) => {
   const { file, onSuccess, onError } = options
-  
+
   uploading.value = true
   try {
      const res = await uploadAvatarUsingPost({}, file)
      // 检查响应状态和数据
-     if (res.data && res.data.code === 0 && res.data.data) {
+     if (res.data && (res.data as any).code === 0 && (res.data as any).data) {
        // 获取实际的图片URL字符串
-       const imageUrl = res.data.data
+       const imageUrl = (res.data as any).data
        // 验证URL是否有效
        if (typeof imageUrl === 'string' && imageUrl.trim()) {
          userForm.userAvatar = imageUrl
@@ -159,7 +199,7 @@ const customUpload = async (options: any) => {
          message.error('获取图片URL失败')
        }
      } else {
-       const errorMsg = res.data?.message || '上传失败'
+       const errorMsg = (res.data as any)?.message || '上传失败'
        onError(new Error(errorMsg))
        message.error(errorMsg)
      }
@@ -178,11 +218,14 @@ const customUpload = async (options: any) => {
 const handleSubmit = async () => {
   loading.value = true
   try {
-    const res = await updateMyInfoUsingPost({
+    // 构建更新数据，明确排除用户ID字段
+    const updateData: API.UserUpdateMyInfoRequest = {
       userName: userForm.userName,
       userAvatar: userForm.userAvatar,
       userProfile: userForm.userProfile
-    })
+      // 注意：不包含 id 字段，确保用户ID不被修改
+    }
+    const res = await updateMyInfoUsingPost(updateData)
     if (res.data) {
       message.success('个人信息更新成功')
       // 刷新全局状态中的用户信息
@@ -198,18 +241,50 @@ const handleSubmit = async () => {
   }
 }
 
+
+
 /**
- * 表单验证失败
- * @param errorInfo 错误信息
+ * 复制用户ID到剪贴板
  */
-const onFinishFailed = (errorInfo: any) => {
-  console.log('表单验证失败:', errorInfo)
+const copyUserId = async () => {
+  try {
+    if (!userForm.id) {
+      message.warning('用户ID不存在，无法复制')
+      return
+    }
+
+    const userIdText = userForm.id.toString()
+
+    // 使用现代剪贴板API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(userIdText)
+    } else {
+      // 降级方案：使用传统方法
+      const textArea = document.createElement('textarea')
+      textArea.value = userIdText
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      document.execCommand('copy')
+      textArea.remove()
+    }
+
+    // 显示成功提示，2秒后自动消失
+    message.success('复制成功', 2)
+  } catch (error) {
+    console.error('复制失败:', error)
+    message.error('复制失败，请手动复制')
+  }
 }
 
 /**
  * 重置表单
  */
 const resetForm = () => {
+  // 重新获取用户信息（包括用户ID）
   fetchUserInfo()
 }
 
@@ -233,5 +308,77 @@ onMounted(() => {
 
 .ant-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 只读字段样式 */
+.readonly-field {
+  background-color: #ffffff !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+}
+
+.readonly-field:hover {
+  background-color: #ffffff !important;
+  border-color: #d9d9d9 !important;
+}
+
+.readonly-field:focus {
+  background-color: #ffffff !important;
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+}
+
+/* 用户ID输入组合样式 */
+.user-id-group {
+  display: flex;
+  width: 100%;
+}
+
+.user-id-input {
+  flex: 1;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.copy-button {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 0 !important;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.copy-button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  border-color: #40a9ff;
+  color: #40a9ff;
+  z-index: 2;
+}
+
+.copy-button:disabled {
+  background-color: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #bfbfbf;
+  cursor: not-allowed;
+}
+
+/* Ant Design 输入组合样式覆盖 */
+.user-id-group.ant-input-group-compact {
+  display: flex !important;
+}
+
+.user-id-group.ant-input-group-compact .ant-input {
+  border-right: 0;
+  flex: 1;
+}
+
+.user-id-group.ant-input-group-compact .ant-btn {
+  border-left: 0;
+  flex-shrink: 0;
 }
 </style>

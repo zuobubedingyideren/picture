@@ -31,7 +31,7 @@ export const useLoginUserStore = defineStore('loginUser', () => {
         }
         // 保持默认的未登录状态
       }
-    } catch (error) {
+    } catch (error: any) {
       // 如果是401未授权错误，不显示警告，这是正常的未登录状态
       if (error.response && error.response.status === 401) {
         console.log('用户未登录，保持默认状态')
